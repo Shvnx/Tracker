@@ -380,8 +380,12 @@ select.select-field {
       <input type="password" id="token-input" placeholder="Paste your access token here..." />
     </div>
     <div class="field-group">
-      <label>Post / Video ID <span style="opacity:0.5;">(optional — auto-fetches latest)</span></label>
-      <input type="text" id="post-id" placeholder="e.g. 17854360229135492" />
+      <label>Instagram Post Link <span style="opacity:0.5;">(paste link — Post ID auto-extracted)</span></label>
+      <input type="text" id="post-link" placeholder="e.g. https://www.instagram.com/p/ABC123xyz/" oninput="extractPostId(this.value)" />
+    </div>
+    <div class="field-group" id="postid-display" style="display:none;">
+      <label>Extracted Post ID</label>
+      <input type="text" id="post-id" readonly style="opacity:0.6;cursor:default;" />
     </div>
 
     <div class="row">
@@ -690,6 +694,25 @@ function setStatus(msg, state) {
   document.getElementById('nav-label').textContent = state==='live' ? 'Live — '+P_NAMES[platform] : 'Offline';
 }
 
+/* ---- LINK → POST ID EXTRACTOR ---- */
+function extractPostId(link) {
+  link = link.trim();
+  // Match /p/CODE/ or /reel/CODE/
+  const m = link.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_\-]+)/);
+  if (m) {
+    document.getElementById('post-id').value = m[1];
+    document.getElementById('postid-display').style.display = 'block';
+  } else {
+    document.getElementById('postid-display').style.display = 'none';
+  }
+}
+
+/* ---- TOKEN SAVE/LOAD ---- */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('spidey_token');
+  if (saved) document.getElementById('token-input').value = saved;
+});
+
 /* ---- BACKEND CONFIG ---- */
 const BACKEND_URL = 'https://tracker-xwbs.onrender.com';
 const APP_SECRET  = 'spidey123secret';   // same as Render env var APP_SECRET
@@ -779,6 +802,7 @@ async function startTracking() {
   const token = document.getElementById('token-input').value.trim();
   const postId = document.getElementById('post-id').value.trim();
   if (!token) { setStatus('Paste your access token first', 'err'); return; }
+  localStorage.setItem('spidey_token', token);
   await stopTracking();
   initChart();
   addLog('Connecting to backend & starting tracker...', 'info');
