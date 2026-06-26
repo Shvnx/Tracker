@@ -6,12 +6,11 @@ async function fetchInstagram(token, postId) {
     if (j.error) throw new Error(j.error.message);
     id = j.data[0].id;
   }
-  const r = await fetch(`https://graph.instagram.com/${id}?fields=id,like_count,comments_count,impressions,reach&access_token=${token}`);
+  const r = await fetch(`https://graph.instagram.com/${id}?fields=id,like_count,comments_count,media_type,timestamp&access_token=${token}`);
   const j = await r.json();
   if (j.error) throw new Error(j.error.message);
-  return { views: j.impressions || j.reach || 0, likes: j.like_count || 0, comments: j.comments_count || 0 };
+  return { views: 0, likes: j.like_count || 0, comments: j.comments_count || 0 };
 }
-
 async function fetchTwitter(token, tweetId) {
   if (tweetId) {
     const r = await fetch(`https://api.twitter.com/2/tweets/${tweetId}?tweet.fields=public_metrics`, {
@@ -33,11 +32,9 @@ async function fetchTwitter(token, tweetId) {
   const m = tj.data[0].public_metrics;
   return { views: m.impression_count || 0, likes: m.like_count || 0, comments: m.reply_count || 0 };
 }
-
 async function fetchSnapshot(platform, token, postId) {
   if (platform === 'instagram') return fetchInstagram(token, postId);
   if (platform === 'twitter') return fetchTwitter(token, postId);
   throw new Error('Unsupported platform: ' + platform);
 }
-
 module.exports = { fetchSnapshot };
